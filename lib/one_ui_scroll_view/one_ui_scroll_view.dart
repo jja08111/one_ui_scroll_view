@@ -6,6 +6,7 @@ import 'package:flutter/scheduler.dart';
 import 'package:sliver_fill_remaining_box_adapter/sliver_fill_remaining_box_adapter.dart';
 
 const double _kExpendedAppBarHeightRatio = 0.381;
+const double _kDefaultToolbarHeight = 56.0 + 1.0;
 
 class OneUiScrollView extends StatefulWidget {
   OneUiScrollView({
@@ -17,7 +18,7 @@ class OneUiScrollView extends StatefulWidget {
     this.bottomDivider = const Divider(height: 0),
     @required this.scrollController,
     this.expandedHeight,
-    this.toolbarHeight = 56.0 + 1.0,
+    this.toolbarHeight = _kDefaultToolbarHeight,
     this.backgroundColor,
     this.elevation = 12.0,
   }) : super(key: key) {
@@ -125,6 +126,23 @@ class _OneUiScrollViewState extends State<OneUiScrollView> {
     );
   }
 
+  Widget _actions() {
+    return Align(
+      alignment: Alignment.bottomRight,
+      child: Container(
+        padding: EdgeInsets.only(left: 16),
+        height: widget.toolbarHeight,
+        child: Align(
+          alignment: Alignment.centerRight,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: widget.actions,
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     _expandedHeight = widget.expandedHeight ??
@@ -147,11 +165,11 @@ class _OneUiScrollViewState extends State<OneUiScrollView> {
             children: [
               _extendedTitle(animation),
               _collapsedTitle(animation),
+              _actions(),
             ],
           );
         },
       ),
-      actions: widget.actions,
       bottom: PreferredSize(
         preferredSize: Size.zero,
         child: widget.bottomDivider,
