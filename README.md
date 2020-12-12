@@ -51,6 +51,9 @@ class _ExamplePageState extends State<ExamplePage> {
           style: TextStyle(fontSize: 32),
         ),
         collapsedTitle: Text('Home', style: TextStyle(fontSize: 24)),
+        actions: [
+          IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
+        ],
         children: List<Widget>.generate(9, (index) {
           return Padding(
             padding: const EdgeInsets.all(16),
