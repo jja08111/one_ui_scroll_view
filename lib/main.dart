@@ -23,7 +23,6 @@ class ExamplePage extends StatefulWidget {
 
 class _ExamplePageState extends State<ExamplePage> {
   ScrollController _scrollController;
-  GlobalKey stickyKey = GlobalKey();
 
   @override
   void initState() {
