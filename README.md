@@ -5,9 +5,8 @@
 ![example](assets/one_ui_scroll_view.gif)
 
 # HOW TO USE
-- You need to install [Sliver Fill Remaining Box Adapter](https://pub.dev/packages/sliver_fill_remaining_box_adapter).
-
 - Here is sample code.
+
 ```dart 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
