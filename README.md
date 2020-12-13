@@ -27,29 +27,12 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class ExamplePage extends StatefulWidget {
-  @override
-  _ExamplePageState createState() => _ExamplePageState();
-}
-
-class _ExamplePageState extends State<ExamplePage> {
-  ScrollController _scrollController;
-
-  @override
-  void initState() {
-    super.initState();
-    _scrollController = ScrollController();
-  }
-
+class ExamplePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: OneUiScrollView(
-        scrollController: _scrollController,
-        extendedTitle: Text(
-          'ONE UI SCROLL VIEW',
-          style: TextStyle(fontSize: 32),
-        ),
+        expendedTitle: Text('ONE UI SCROLL VIEW', style: TextStyle(fontSize: 32)),
         collapsedTitle: Text('Home', style: TextStyle(fontSize: 24)),
         actions: [
           IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),

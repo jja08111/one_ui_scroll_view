@@ -1,33 +1,28 @@
-import 'dart:async';
-
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/scheduler.dart';
-import 'package:sliver_fill_remaining_box_adapter/sliver_fill_remaining_box_adapter.dart';
+import 'package:flutter/rendering.dart';
 
 const double _kExpendedAppBarHeightRatio = 0.381;
-const double _kDefaultToolbarHeight = 56.0 + 1.0;
 
 class OneUiScrollView extends StatefulWidget {
   OneUiScrollView({
     Key key,
-    @required this.extendedTitle,
+    @required this.expendedTitle,
     @required this.collapsedTitle,
     this.actions,
     this.children = const [],
     this.bottomDivider = const Divider(height: 0),
-    @required this.scrollController,
+    this.scrollController,
     this.expandedHeight,
-    this.toolbarHeight = _kDefaultToolbarHeight,
+    this.toolbarHeight = kToolbarHeight,
     this.backgroundColor,
     this.elevation = 12.0,
   }) : super(key: key) {
-    assert(extendedTitle != null);
+    assert(expendedTitle != null);
     assert(collapsedTitle != null);
-    assert(scrollController != null);
   }
 
-  final Widget extendedTitle;
+  final Widget expendedTitle;
   final Widget collapsedTitle;
   final List<Widget> actions;
   final List<Widget> children;
@@ -42,46 +37,34 @@ class OneUiScrollView extends StatefulWidget {
   _OneUiScrollViewState createState() => _OneUiScrollViewState();
 }
 
-class _OneUiScrollViewState extends State<OneUiScrollView> {
-  GlobalKey _containerKey = GlobalKey();
+class _OneUiScrollViewState extends State<OneUiScrollView> with SingleTickerProviderStateMixin {
+  ScrollController _scrollController;
   double _expandedHeight;
-  double _bottomPadding;
+  Future<void> scrollAnimateToRunning;
+  //bool isScrollIdle = true;
 
   @override
   void initState() {
     super.initState();
-    _bottomPadding = 0;
-    widget.children.add(Container(key: _containerKey));
-
-    SchedulerBinding.instance.addPostFrameCallback(_setBottomPadding);
+    _scrollController = widget.scrollController ?? ScrollController();
   }
 
-  void _setBottomPadding(Duration duration) {
-    final keyContext = _containerKey.currentContext;
-    if (_bottomPadding == 0 && keyContext != null) {
-      final box = keyContext.findRenderObject() as RenderBox;
-      final pos = box.localToGlobal(Offset.zero);
-      final overflowedHeight = (pos.dy - MediaQuery.of(context).size.height);
+  bool _onNotification(ScrollEndNotification notification) {
+    final range = _expandedHeight - widget.toolbarHeight;
 
-      double bottomPadding = (_expandedHeight - widget.toolbarHeight);
-      if(overflowedHeight > 0) {
-        bottomPadding -= overflowedHeight;
-        if(bottomPadding < 0)
-          bottomPadding = 0;
-      }
-      assert(bottomPadding > 0);
-      setState(() => _bottomPadding = bottomPadding);
-    }
-  }
+    if (_scrollController.offset > 0 && _scrollController.offset < range) {
+      final double snapOffset = _scrollController.offset / range > 0.5 ? range : 0;
 
-  bool _onNotification(ScrollEndNotification scrollEndNotification) {
-    final scrollDistance = _expandedHeight - widget.toolbarHeight;
-    if(widget.scrollController.offset > 0
-        && widget.scrollController.offset < scrollDistance) {
-      final double snapOffset = widget.scrollController.offset / scrollDistance > 0.5
-          ? scrollDistance : 0;
-      Future.microtask(() => widget.scrollController.animateTo(snapOffset,
-          duration: const Duration(milliseconds: 150), curve: Curves.easeIn));
+      Future.delayed(Duration.zero, () async {
+        if(scrollAnimateToRunning != null) {
+          await scrollAnimateToRunning;
+        }
+        scrollAnimateToRunning = _scrollController.animateTo(
+          snapOffset,
+          curve: Curves.ease,
+          duration: const Duration(milliseconds: 150),
+        );
+      });
     }
     return true;
   }
@@ -102,7 +85,7 @@ class _OneUiScrollViewState extends State<OneUiScrollView> {
         parent: animation,
         curve: Interval(0.3, 1.0, curve: Curves.easeIn),
       )),
-      child: Center(child: widget.extendedTitle),
+      child: Center(child: widget.expendedTitle),
     );
   }
 
@@ -127,6 +110,8 @@ class _OneUiScrollViewState extends State<OneUiScrollView> {
   }
 
   Widget _actions() {
+    if(widget.actions == null)
+      return Container();
     return Align(
       alignment: Alignment.bottomRight,
       child: Container(
@@ -143,55 +128,72 @@ class _OneUiScrollViewState extends State<OneUiScrollView> {
     );
   }
 
+  List<Widget> _getAppBar(context, innerBoxIsScrolled) {
+    return [
+      Builder(builder: (context) => SliverOverlapAbsorber(
+        handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+        sliver: SliverAppBar(
+          backgroundColor: widget.backgroundColor,
+          pinned: true,
+          expandedHeight: _expandedHeight,
+          toolbarHeight: widget.toolbarHeight,
+          elevation: 12,
+          flexibleSpace:LayoutBuilder(
+            builder: (context, constraints) {
+              final expandRatio = _calculateExpandRatio(constraints);
+              final animation = AlwaysStoppedAnimation(expandRatio);
+
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  _extendedTitle(animation),
+                  _collapsedTitle(animation),
+                  _actions(),
+                ],
+              );
+            },
+          ),
+          bottom: PreferredSize(
+            preferredSize: Size.zero,
+            child: widget.bottomDivider,
+          ),
+        ),
+      )),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     _expandedHeight = widget.expandedHeight ??
         MediaQuery.of(context).size.height * _kExpendedAppBarHeightRatio;
 
-    final Widget appBar = SliverAppBar(
-      backgroundColor: widget.backgroundColor,
-      pinned: true,
-      expandedHeight: _expandedHeight,
-      toolbarHeight: widget.toolbarHeight,
-      elevation: 12,
-      //title: Text('취침 알람', style: FontTheme.BoldHeadline5),
-      flexibleSpace: LayoutBuilder(
-        builder: (context, constraints) {
-          final expandRatio = _calculateExpandRatio(constraints);
-          final animation = AlwaysStoppedAnimation(expandRatio);
-
-          return Stack(
-            fit: StackFit.expand,
-            children: [
-              _extendedTitle(animation),
-              _collapsedTitle(animation),
-              _actions(),
-            ],
-          );
-        },
-      ),
-      bottom: PreferredSize(
-        preferredSize: Size.zero,
-        child: widget.bottomDivider,
-      ),
+    final Widget body = SafeArea(
+      top: false,
+      child: Builder(builder: (BuildContext context) => CustomScrollView(
+        slivers: <Widget>[
+          SliverList(
+            delegate: SliverChildBuilderDelegate(
+                  (BuildContext context, int i) => widget.children[i],
+              childCount: widget.children.length,
+            ),
+          ),
+        ],
+      )),
     );
 
-    return NotificationListener<OverscrollIndicatorNotification>(
-      onNotification: (overScroll) {
-        overScroll.disallowGlow();
-        return true;
-      },
-      child: NotificationListener<ScrollEndNotification>(
-        onNotification: _onNotification,
-        child: CustomScrollView(
-          physics: AlwaysScrollableScrollPhysics(),
-          controller: widget.scrollController,
-          slivers: [
-            appBar,
-            SliverList(delegate: SliverChildListDelegate(widget.children)),
-            SliverFillRemainingBoxAdapter(child: Container()),
-            SliverPadding(padding: EdgeInsets.only(bottom: _bottomPadding)),
-          ],
+    return SafeArea(
+      child: NotificationListener<OverscrollIndicatorNotification>(
+        onNotification: (overScroll) {
+          overScroll.disallowGlow();
+          return true;
+        },
+        child: NotificationListener<ScrollEndNotification>(
+          onNotification: _onNotification,
+          child: NestedScrollView(
+            controller: _scrollController,
+            headerSliverBuilder: _getAppBar,
+            body: body,
+          ),
         ),
       ),
     );

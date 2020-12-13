@@ -93,13 +93,6 @@ packages:
     description: flutter
     source: sdk
     version: "0.0.99"
-  sliver_fill_remaining_box_adapter:
-    dependency: "direct main"
-    description:
-      name: sliver_fill_remaining_box_adapter
-      url: "https://pub.dartlang.org"
-    source: hosted
-    version: "0.1.1"
   source_span:
     dependency: transitive
     description:
@@ -150,7 +143,7 @@ packages:
     source: hosted
     version: "1.3.0-nullsafety.3"
   vector_math:
-    dependency: "direct main"
+    dependency: transitive
     description:
       name: vector_math
       url: "https://pub.dartlang.org"
