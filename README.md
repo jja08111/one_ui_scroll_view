@@ -31,7 +31,7 @@ class ExamplePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       body: OneUiScrollView(
-        expendedTitle: Text('ONE UI SCROLL VIEW', style: TextStyle(fontSize: 32)),
+        expandedTitle: Text('ONE UI SCROLL VIEW', style: TextStyle(fontSize: 32)),
         collapsedTitle: Text('Home', style: TextStyle(fontSize: 24)),
         actions: [
           IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),

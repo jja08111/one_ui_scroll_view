@@ -7,7 +7,7 @@ const double _kExpendedAppBarHeightRatio = 0.381;
 class OneUiScrollView extends StatefulWidget {
   OneUiScrollView({
     Key key,
-    @required this.expendedTitle,
+    @required this.expandedTitle,
     @required this.collapsedTitle,
     this.actions,
     this.children = const [],
@@ -15,14 +15,14 @@ class OneUiScrollView extends StatefulWidget {
     this.scrollController,
     this.expandedHeight,
     this.toolbarHeight = kToolbarHeight,
-    this.backgroundColor,
+    this.appBarColor,
     this.elevation = 12.0,
   }) : super(key: key) {
-    assert(expendedTitle != null);
+    assert(expandedTitle != null);
     assert(collapsedTitle != null);
   }
 
-  final Widget expendedTitle;
+  final Widget expandedTitle;
   final Widget collapsedTitle;
   final List<Widget> actions;
   final List<Widget> children;
@@ -30,7 +30,7 @@ class OneUiScrollView extends StatefulWidget {
   final ScrollController scrollController;
   final double expandedHeight;
   final double toolbarHeight;
-  final Color backgroundColor;
+  final Color appBarColor;
   final double elevation;
 
   @override
@@ -41,7 +41,6 @@ class _OneUiScrollViewState extends State<OneUiScrollView> with SingleTickerProv
   ScrollController _scrollController;
   double _expandedHeight;
   Future<void> scrollAnimateToRunning;
-  //bool isScrollIdle = true;
 
   @override
   void initState() {
@@ -85,7 +84,7 @@ class _OneUiScrollViewState extends State<OneUiScrollView> with SingleTickerProv
         parent: animation,
         curve: Interval(0.3, 1.0, curve: Curves.easeIn),
       )),
-      child: Center(child: widget.expendedTitle),
+      child: Center(child: widget.expandedTitle),
     );
   }
 
@@ -132,30 +131,33 @@ class _OneUiScrollViewState extends State<OneUiScrollView> with SingleTickerProv
     return [
       Builder(builder: (context) => SliverOverlapAbsorber(
         handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-        sliver: SliverAppBar(
-          backgroundColor: widget.backgroundColor,
-          pinned: true,
-          expandedHeight: _expandedHeight,
-          toolbarHeight: widget.toolbarHeight,
-          elevation: 12,
-          flexibleSpace:LayoutBuilder(
-            builder: (context, constraints) {
-              final expandRatio = _calculateExpandRatio(constraints);
-              final animation = AlwaysStoppedAnimation(expandRatio);
+        sliver: SliverSafeArea(
+          top: false,
+          sliver: SliverAppBar(
+            backgroundColor: widget.appBarColor,
+            pinned: true,
+            expandedHeight: _expandedHeight,
+            toolbarHeight: widget.toolbarHeight,
+            elevation: 12,
+            flexibleSpace:LayoutBuilder(
+              builder: (context, constraints) {
+                final expandRatio = _calculateExpandRatio(constraints);
+                final animation = AlwaysStoppedAnimation(expandRatio);
 
-              return Stack(
-                fit: StackFit.expand,
-                children: [
-                  _extendedTitle(animation),
-                  _collapsedTitle(animation),
-                  _actions(),
-                ],
-              );
-            },
-          ),
-          bottom: PreferredSize(
-            preferredSize: Size.zero,
-            child: widget.bottomDivider,
+                return Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    _extendedTitle(animation),
+                    _collapsedTitle(animation),
+                    _actions(),
+                  ],
+                );
+              },
+            ),
+            bottom: PreferredSize(
+              preferredSize: Size.zero,
+              child: widget.bottomDivider,
+            ),
           ),
         ),
       )),
@@ -167,18 +169,16 @@ class _OneUiScrollViewState extends State<OneUiScrollView> with SingleTickerProv
     _expandedHeight = widget.expandedHeight ??
         MediaQuery.of(context).size.height * _kExpendedAppBarHeightRatio;
 
-    final Widget body = SafeArea(
-      top: false,
-      child: Builder(builder: (BuildContext context) => CustomScrollView(
-        slivers: <Widget>[
-          SliverList(
-            delegate: SliverChildBuilderDelegate(
-                  (BuildContext context, int i) => widget.children[i],
-              childCount: widget.children.length,
-            ),
+    final Widget body = Builder(builder: (BuildContext context) => CustomScrollView(
+      slivers: <Widget>[
+        SliverList(
+          delegate: SliverChildBuilderDelegate(
+                (BuildContext context, int i) => widget.children[i],
+            childCount: widget.children.length,
           ),
-        ],
-      )),
+        ),
+      ],
+    ),
     );
 
     return SafeArea(
