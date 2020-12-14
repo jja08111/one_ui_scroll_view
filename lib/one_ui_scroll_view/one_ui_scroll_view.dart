@@ -47,6 +47,12 @@ class _OneUiScrollViewState extends State<OneUiScrollView> with SingleTickerProv
     super.initState();
     _scrollController = widget.scrollController ?? ScrollController();
   }
+  
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   bool _onNotification(ScrollEndNotification notification) {
     final range = _expandedHeight - widget.toolbarHeight;
