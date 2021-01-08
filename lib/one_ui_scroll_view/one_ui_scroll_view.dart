@@ -75,6 +75,12 @@ class _OneUiScrollViewState extends State<OneUiScrollView>
       duration: const Duration(milliseconds: 150),
     );
   }
+  
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   bool _onNotification(ScrollEndNotification notification) {
     final scrollViewState = _nestedScrollViewStateKey.currentState;
