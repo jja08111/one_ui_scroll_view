@@ -83,7 +83,7 @@ class _OneUiScrollViewState extends State<OneUiScrollView>
     if (scrollViewState.innerController.position.pixels == 0
         && !outerController.position.atEdge) {
       final range = _expandedHeight - widget.toolbarHeight;
-      final snapOffset = (outerController.offset / range) > 0.5 ? range : 0;
+      final snapOffset = (outerController.offset / range) > 0.5 ? range : 0.0;
 
       Future.microtask(() => _snapAppBar(outerController, snapOffset));
     }
