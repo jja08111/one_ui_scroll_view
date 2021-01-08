@@ -41,8 +41,8 @@ class OneUiScrollView extends StatefulWidget {
   final Color backgroundColor;
   final double elevation;
 
-  /// The globalKey that is used to get innerScrollController, outerScrollController
-  /// at [NestedScrollViewState].
+  /// The globalKey that is used to get innerScrollController
+  /// of [NestedScrollViewState].
   ///
   /// - How to use
   ///
@@ -75,12 +75,6 @@ class _OneUiScrollViewState extends State<OneUiScrollView>
       duration: const Duration(milliseconds: 150),
     );
   }
-  
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
 
   bool _onNotification(ScrollEndNotification notification) {
     final scrollViewState = _nestedScrollViewStateKey.currentState;
@@ -89,7 +83,7 @@ class _OneUiScrollViewState extends State<OneUiScrollView>
     if (scrollViewState.innerController.position.pixels == 0
         && !outerController.position.atEdge) {
       final range = _expandedHeight - widget.toolbarHeight;
-      final snapOffset = (outerController.offset / range) > 0.5 ? range : 0.0;
+      final snapOffset = (outerController.offset / range) > 0.5 ? range : 0;
 
       Future.microtask(() => _snapAppBar(outerController, snapOffset));
     }
