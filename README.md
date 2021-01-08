@@ -1,5 +1,5 @@
 # One Ui Scroll View
- The CustomScrollView that work like expandable appBar at Samsung ONE UI.
+The NestedScrollView that works like Samsung ONE UI's extendable AppBar.
 
 # EXAMPLE
 ![example](assets/one_ui_scroll_view.gif)
@@ -36,7 +36,7 @@ class ExamplePage extends StatelessWidget {
         actions: [
           IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
         ],
-        children: List<Widget>.generate(9, (index) {
+        children: List<Widget>.generate(100, (index) {
           return Padding(
             padding: const EdgeInsets.all(16),
             child: Text(
@@ -50,3 +50,11 @@ class ExamplePage extends StatelessWidget {
   }
 }
 ```
+
+# UPDATE LOG
+
+### 0.0.1
+Init upload
+
+### 0.1.0
+Implement custom scroll physics

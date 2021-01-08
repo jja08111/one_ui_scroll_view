@@ -26,7 +26,7 @@ class ExamplePage extends StatelessWidget {
         actions: [
           IconButton(icon: const Icon(Icons.more_vert), onPressed: () {}),
         ],
-        children: List<Widget>.generate(9, (index) {
+        children: List<Widget>.generate(100, (index) {
           return Padding(
             padding: const EdgeInsets.all(16),
             child: Text(

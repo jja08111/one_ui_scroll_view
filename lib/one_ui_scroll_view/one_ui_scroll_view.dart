@@ -1,8 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import 'components/one_ui_scroll_physics.dart';
 
-const double _kExpendedAppBarHeightRatio = 0.381;
+const Divider _kBottomDivider = const Divider(
+  height: 0,
+  color: Colors.white54,
+);
+
+const double _kExpendedAppBarHeightRatio = 3/8;
 
 class OneUiScrollView extends StatefulWidget {
   OneUiScrollView({
@@ -11,61 +17,77 @@ class OneUiScrollView extends StatefulWidget {
     @required this.collapsedTitle,
     this.actions,
     this.children = const [],
-    this.bottomDivider = const Divider(height: 0),
-    this.scrollController,
+    this.childrenPadding = EdgeInsets.zero,
+    this.bottomDivider = _kBottomDivider,
     this.expandedHeight,
     this.toolbarHeight = kToolbarHeight,
-    this.appBarColor,
+    this.actionSpacing = 0,
+    this.backgroundColor,
     this.elevation = 12.0,
-  }) : super(key: key) {
-    assert(expandedTitle != null);
-    assert(collapsedTitle != null);
-  }
+    this.globalKey,
+  }) : assert(expandedTitle != null),
+        assert(collapsedTitle != null),
+        super(key: key);
 
   final Widget expandedTitle;
   final Widget collapsedTitle;
   final List<Widget> actions;
   final List<Widget> children;
+  final EdgeInsetsGeometry childrenPadding;
   final Divider bottomDivider;
-  final ScrollController scrollController;
   final double expandedHeight;
   final double toolbarHeight;
-  final Color appBarColor;
+  final double actionSpacing;
+  final Color backgroundColor;
   final double elevation;
+
+  /// The globalKey that is used to get innerScrollController, outerScrollController
+  /// at [NestedScrollViewState].
+  ///
+  /// - How to use
+  ///
+  /// {@animation 464 192 https://api.flutter.dev/flutter/widgets/NestedScrollViewState-class.html}
+  final GlobalKey<NestedScrollViewState> globalKey;
 
   @override
   _OneUiScrollViewState createState() => _OneUiScrollViewState();
 }
 
-class _OneUiScrollViewState extends State<OneUiScrollView> with SingleTickerProviderStateMixin {
-  ScrollController _scrollController;
+class _OneUiScrollViewState extends State<OneUiScrollView>
+    with SingleTickerProviderStateMixin {
+  GlobalKey<NestedScrollViewState> _nestedScrollViewStateKey;
   double _expandedHeight;
-  Future<void> scrollAnimateToRunning;
+  Future<void> _scrollAnimate;
 
   @override
   void initState() {
     super.initState();
-    _scrollController = widget.scrollController ?? ScrollController();
+    _nestedScrollViewStateKey = widget.globalKey ?? GlobalKey();
+  }
+
+  void _snapAppBar(ScrollController controller, double snapOffset) async {
+    if(_scrollAnimate != null)
+      await _scrollAnimate;
+
+    _scrollAnimate = controller.animateTo(
+      snapOffset,
+      curve: Curves.ease,
+      duration: const Duration(milliseconds: 150),
+    );
   }
 
   bool _onNotification(ScrollEndNotification notification) {
-    final range = _expandedHeight - widget.toolbarHeight;
+    final scrollViewState = _nestedScrollViewStateKey.currentState;
+    final outerController = scrollViewState.outerController;
 
-    if (_scrollController.offset > 0 && _scrollController.offset < range) {
-      final double snapOffset = _scrollController.offset / range > 0.5 ? range : 0;
+    if (scrollViewState.innerController.position.pixels == 0
+        && !outerController.position.atEdge) {
+      final range = _expandedHeight - widget.toolbarHeight;
+      final snapOffset = (outerController.offset / range) > 0.5 ? range : 0.0;
 
-      Future.delayed(Duration.zero, () async {
-        if(scrollAnimateToRunning != null) {
-          await scrollAnimateToRunning;
-        }
-        scrollAnimateToRunning = _scrollController.animateTo(
-          snapOffset,
-          curve: Curves.ease,
-          duration: const Duration(milliseconds: 150),
-        );
-      });
+      Future.microtask(() => _snapAppBar(outerController, snapOffset));
     }
-    return true;
+    return false;
   }
 
   double _calculateExpandRatio(BoxConstraints constraints) {
@@ -114,7 +136,7 @@ class _OneUiScrollViewState extends State<OneUiScrollView> with SingleTickerProv
     return Align(
       alignment: Alignment.bottomRight,
       child: Container(
-        padding: EdgeInsets.only(left: 16),
+        padding: EdgeInsets.only(right: widget.actionSpacing),
         height: widget.toolbarHeight,
         child: Align(
           alignment: Alignment.centerRight,
@@ -129,56 +151,64 @@ class _OneUiScrollViewState extends State<OneUiScrollView> with SingleTickerProv
 
   List<Widget> _getAppBar(context, innerBoxIsScrolled) {
     return [
-      Builder(builder: (context) => SliverOverlapAbsorber(
+      SliverOverlapAbsorber(
         handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-        sliver: SliverSafeArea(
-          top: false,
-          sliver: SliverAppBar(
-            backgroundColor: widget.appBarColor,
-            pinned: true,
-            expandedHeight: _expandedHeight,
-            toolbarHeight: widget.toolbarHeight,
-            elevation: 12,
-            flexibleSpace:LayoutBuilder(
-              builder: (context, constraints) {
-                final expandRatio = _calculateExpandRatio(constraints);
-                final animation = AlwaysStoppedAnimation(expandRatio);
+        sliver: SliverAppBar(
+          backgroundColor: widget.backgroundColor,
+          pinned: true,
+          expandedHeight: _expandedHeight,
+          toolbarHeight: widget.toolbarHeight,
+          elevation: 12,
+          flexibleSpace: LayoutBuilder(
+            builder: (context, constraints) {
+              final expandRatio = _calculateExpandRatio(constraints);
+              final animation = AlwaysStoppedAnimation(expandRatio);
 
-                return Stack(
-                  fit: StackFit.expand,
-                  children: [
-                    _extendedTitle(animation),
-                    _collapsedTitle(animation),
-                    _actions(),
-                  ],
-                );
-              },
-            ),
-            bottom: PreferredSize(
-              preferredSize: Size.zero,
-              child: widget.bottomDivider,
-            ),
+              return Stack(
+                fit: StackFit.expand,
+                children: [
+                  _extendedTitle(animation),
+                  _collapsedTitle(animation),
+                  _actions(),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: widget.bottomDivider,
+                  )
+                ],
+              );
+            },
           ),
         ),
-      )),
+      ),
     ];
   }
 
   @override
   Widget build(BuildContext context) {
     _expandedHeight = widget.expandedHeight ??
-        MediaQuery.of(context).size.height * _kExpendedAppBarHeightRatio;
+        (MediaQuery.of(context).size.height * _kExpendedAppBarHeightRatio);
 
-    final Widget body = Builder(builder: (BuildContext context) => CustomScrollView(
-      slivers: <Widget>[
-        SliverList(
-          delegate: SliverChildBuilderDelegate(
-                (BuildContext context, int i) => widget.children[i],
-            childCount: widget.children.length,
-          ),
+    final Widget body = SafeArea(
+      top: false,
+      bottom: false,
+      child: Builder(
+        builder: (BuildContext context) => CustomScrollView(
+          slivers: <Widget>[
+            SliverOverlapInjector(
+              handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
+            ),
+            SliverPadding(
+              padding: widget.childrenPadding,
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                      (BuildContext context, int i) => widget.children[i],
+                  childCount: widget.children.length,
+                ),
+              ),
+            ),
+          ],
         ),
-      ],
-    ),
+      ),
     );
 
     return SafeArea(
@@ -190,7 +220,8 @@ class _OneUiScrollViewState extends State<OneUiScrollView> with SingleTickerProv
         child: NotificationListener<ScrollEndNotification>(
           onNotification: _onNotification,
           child: NestedScrollView(
-            controller: _scrollController,
+            key: _nestedScrollViewStateKey,
+            physics: OneUiScrollPhysics(_expandedHeight),
             headerSliverBuilder: _getAppBar,
             body: body,
           ),
