@@ -51,10 +51,10 @@ class ExamplePage extends StatelessWidget {
 }
 ```
 
-# UPDATE LOG
-
-### 0.0.1
-Init upload
+# CHANGELOG
 
 ### 0.1.0
 Implement custom scroll physics
+
+### 0.0.1
+Init upload
