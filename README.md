@@ -1,5 +1,5 @@
 # One Ui Scroll View
-The NestedScrollView that works like Samsung ONE UI's extendable AppBar.
+The NestedScrollView works like Samsung ONE UI's extendable AppBar. I recommand using the [one_ui plugin](https://github.com/tockiib/one_ui) instead of this.
 
 # EXAMPLE
 ![example](assets/one_ui_scroll_view.gif)
